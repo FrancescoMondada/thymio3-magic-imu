@@ -74,11 +74,13 @@ def parse_n(line):
     return d
 
 
-def run(script, seconds, args="", **robot_kw):
+def run(script, seconds, args="", slip=0, **robot_kw):
+    """Run the mode. `slip` is the mode's own last setting (the page does not send it): the tests leave the first show's mistake off unless they
+    are about it."""
     robot = VirtualRobot(**robot_kw)
     robot.on_tick = script.driver()
     robot.max_ticks = int(seconds * 1000 / TICK_MS)
-    load(SOURCE, robot, "\nrun(%s)\n" % args)
+    load(SOURCE, robot, "\nrun(%s%sslip=%d)\n" % (args, ", " if args else "", slip))
     return robot
 
 
@@ -545,6 +547,113 @@ class Show(unittest.TestCase):
         self.assertLess(abs(((final[3] - (-90.0)) + 180) % 360 - 180), 6.0)
 
 
+class Slip(unittest.TestCase):
+    """The first show since the program started goes one number too far, stops for a second, comes back, and only then drives."""
+
+    def show(self, n, seconds=30.0, **kw):
+        s, press = full_show(n, **kw)
+        r = run(s, press + seconds, slip=1)
+        return r, press
+
+    def test_one_number_too_far_then_back_to_the_right_one(self):
+        for n in range(8):
+            r, press = self.show(n)
+            calls = [c for c in r.rot_calls if c[1] == "abs"]
+            self.assertEqual([c[2] for c in calls], [-(360 + 45 * (n + 1)), -(360 + 45 * n)], "number %d" % n)
+            names = [p for _, p in phases(r)]
+            self.assertEqual(names, ["locked", "ready", "spin", "drive", "finale", "wait"], "number %d: %r" % (n, names))
+            self.assertEqual(r.words("go"), ["@@go %d" % n])
+            self.assertEqual(r.words("end"), ["@@end %d" % n])
+
+    def test_the_path(self):
+        # n = 2: it goes to 3 (-495), stays there for about a second, comes back to 2 (-450), and only then drives, ending towards 2
+        r, press = self.show(2)
+        when = {p: ms for ms, p in phases(r)}
+        turn = [p for p in r.poses if when["spin"] <= p[0] <= when["drive"]]
+        lowest = min(p[3] for p in turn)
+        self.assertLess(abs(lowest - (-495)), 8.0, lowest)                      # it went one number too far (45 degrees past the number)
+        reached = [p[0] for p in turn if p[3] <= -495 + 4.0][0]
+        left = [p[0] for p in turn if p[0] > reached and p[3] > -495 + 6.0][0]    # when it starts to come back
+        self.assertTrue(800 <= left - reached <= 1900, "stayed %d ms there" % (left - reached))
+        steady = [p[3] for p in turn if reached + 100 <= p[0] <= reached + 800]
+        self.assertLess(max(steady) - min(steady), 4.0)                         # it stays put
+        end = turn[-1][3]
+        self.assertLess(abs(end - (-450)), 5.0, end)                            # back on the right number before it drives
+        self.assertLess(max(math.hypot(p[1], p[2]) for p in turn), 12.0)         # all on the spot: it drives only after
+        # it drives towards the right number, 90 mm away
+        final = [p for p in r.poses if when["finale"] <= p[0] <= when["finale"] + 20][0]
+        self.assertLess(abs(math.hypot(final[1], final[2]) - 90), 12.0)
+        self.assertLess(abs(((final[3] - (-90.0)) + 180) % 360 - 180), 6.0)
+
+    def test_the_back_turn_is_anticlockwise_and_short(self):
+        r, press = self.show(5)
+        when = {p: ms for ms, p in phases(r)}
+        calls = [c for c in r.rot_calls if c[1] == "abs"]
+        back_at = calls[1][0]
+        turn = [p for p in r.poses if back_at <= p[0] <= when["drive"]]
+        heading = [p[3] for p in turn]
+        for a, b in zip(heading, heading[1:]):
+            self.assertGreaterEqual(b, a - 0.5)                                 # it only turns back (the other way), never on
+        self.assertLess(abs(heading[-1] - (-(360 + 45 * 5))), 5.0)
+        self.assertLess(back_at / 1000.0 - when["spin"] / 1000.0, 9.0)
+
+    def test_the_seventh_goes_a_whole_lap_further(self):
+        r, press = self.show(7)
+        calls = [c for c in r.rot_calls if c[1] == "abs"]
+        self.assertEqual([c[2] for c in calls], [-720, -675])
+
+    def test_only_the_first_show(self):
+        s, press = full_show(2)
+        end = press + 30.0
+        second = acc_for_number(5)
+        s.at(end, acc=second).at(end + 1.5, ground=HAND).at(end + 2.5, ground=NOHAND, acc=[3000, 2000, 9000]).at(end + 2.9, acc=FLAT).press(end + 4.5)
+        r = run(s, end + 4.5 + 25.0, slip=1)
+        calls = [c[2] for c in r.rot_calls if c[1] == "abs"]
+        self.assertEqual(calls, [-(360 + 135), -(360 + 90), -(360 + 225)])      # the first one slips, the second goes straight
+        self.assertEqual(r.words("end"), ["@@end 2", "@@end 5"])
+
+    def test_no_mistake_when_it_is_off(self):
+        s, press = full_show(2)
+        r = run(s, press + 25.0, slip=0)
+        self.assertEqual([c[2] for c in r.rot_calls if c[1] == "abs"], [-(360 + 90)])
+
+    def test_the_page_does_not_have_to_say_anything(self):
+        # run() with the page's six arguments: the mistake is on
+        s, press = full_show(1)
+        robot = VirtualRobot()
+        robot.on_tick = s.driver()
+        robot.max_ticks = int((press + 30.0) * 1000 / TICK_MS)
+        load(SOURCE, robot, "\nrun(0, -1, 90, 300, -1, 1)\n")
+        self.assertEqual([c[2] for c in robot.rot_calls if c[1] == "abs"], [-(360 + 90), -(360 + 45)])
+
+    def test_picked_up_before_the_mistake_it_is_made_next_time(self):
+        s, press = full_show(2)
+        s.at(press + 1.0, acc=[6000, 0, 6000])                                  # lifted early in the turn
+        s.at(press + 3.0, acc=FLAT).press(press + 6.0)
+        r = run(s, press + 40.0, slip=1)
+        calls = [c[2] for c in r.rot_calls if c[1] == "abs"]
+        self.assertEqual(calls, [-(360 + 135), -(360 + 135), -(360 + 90)])      # twice towards 3, then back to 2
+        self.assertEqual(r.words("abort"), ["@@abort lifted"])
+        self.assertEqual(r.words("end"), ["@@end 2"])
+
+    def test_picked_up_after_the_mistake_it_is_not_made_again(self):
+        s, press = full_show(2)
+        probe = run(full_show(2)[0], press + 30.0, slip=1)
+        back_at = [c[0] for c in probe.rot_calls if c[1] == "abs"][1]           # the robot starts to come back at this time
+        s.at(back_at / 1000.0 + 0.3, acc=[6000, 0, 6000])                       # lifted on its way back
+        s.at(back_at / 1000.0 + 2.3, acc=FLAT).press(back_at / 1000.0 + 5.0)
+        r = run(s, back_at / 1000.0 + 35.0, slip=1)
+        calls = [c[2] for c in r.rot_calls if c[1] == "abs"]
+        self.assertEqual(calls, [-(360 + 135), -(360 + 90), -(360 + 90)])       # the mistake is not repeated
+        self.assertEqual(r.words("end"), ["@@end 2"])
+
+    def test_no_stop_of_the_page_lines(self):
+        # the page sees the same states as without the mistake
+        r, press = self.show(3)
+        lines = [t for _, t in r.lines if t.startswith("@@phase")]
+        self.assertEqual(len(lines), 6)
+
+
 class Lines(unittest.TestCase):
     def test_start_up_lines(self):
         r = run(Script().at(0, acc=FLAT), 0.5)
@@ -615,8 +724,8 @@ class Lines(unittest.TestCase):
 def golden_scenarios():
     out = []
 
-    def add(name, script, seconds, args="", **robot_kw):
-        out.append((name, script, seconds, args, robot_kw))
+    def add(name, script, seconds, args="", slip=0, **robot_kw):
+        out.append((name, script, seconds, args, slip, robot_kw))
 
     for n in range(8):
         s, press = full_show(n)
@@ -644,15 +753,26 @@ def golden_scenarios():
     s.at(3.5, acc=FLAT).press(4.0)
     s.at(6.0, acc=FLAT).press(6.5)
     add("early-presses", s, 30.0)
+    # the mistake of the first show
+    for n in (0, 2, 7):
+        s, press = full_show(n)
+        add("slip-%d" % n, s, press + 22.0, slip=1)
+    s, press = full_show(4)
+    end = press + 22.0
+    s.at(end, acc=acc_for_number(1)).at(end + 1.5, ground=HAND).at(end + 2.5, ground=NOHAND, acc=[3000, 2000, 9000]).at(end + 2.9, acc=FLAT).press(end + 4.5)
+    add("slip-then-straight", s, end + 4.5 + 20.0, slip=1)
+    s, press = full_show(2)
+    s.at(press + 1.0, acc=[6000, 0, 6000]).at(press + 3.0, acc=FLAT).press(press + 6.0)
+    add("slip-lifted-before-the-mistake", s, press + 40.0, slip=1)
     return out
 
 
 def write_golden(path):
     data = []
-    for name, script, seconds, args, robot_kw in golden_scenarios():
-        r = run(script, seconds, args, **robot_kw)
+    for name, script, seconds, args, slip, robot_kw in golden_scenarios():
+        r = run(script, seconds, args, slip=slip, **robot_kw)
         data.append({
-            "name": name, "args": args, "ticks": int(seconds * 1000 / TICK_MS), "events": sorted(script.events, key=lambda e: e[0]),
+            "name": name, "args": args, "slip": slip, "ticks": int(seconds * 1000 / TICK_MS), "events": sorted(script.events, key=lambda e: e[0]),
             "lines": [[ms, t] for ms, t in r.lines],
             "tones": [[ms, f, d] for ms, f, d in r.tones],
             "sounds": [[ms, i] for ms, i in r.sounds],

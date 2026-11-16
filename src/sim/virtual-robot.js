@@ -33,7 +33,7 @@ export class VirtualRobot {
   get running() { return !!this.mode; }
   get clock() { return this.body.nowMs; }
 
-  // Start the mode: returns what it says at once. `init`: { theta4, dirn, dist, hand, force, sound }.
+  // Start the mode: returns what it says at once. `init`: { theta4, dirn, dist, hand, force, sound, slip }.
   start(init = {}) {
     this.body.setSpeed(0, 0);
     this.body.timerPause();
@@ -45,6 +45,7 @@ export class VirtualRobot {
       hand: init.hand ?? 300,
       force: init.force ?? -1,
       sound: init.sound ?? 1,
+      slip: init.slip ?? true,
       say: (text) => this.lines.push(text),
       tone: (freq, tenths) => { this.tones.push([this.body.nowMs, freq, tenths]); return true; },
       playSound: (id) => this.sounds.push([this.body.nowMs, id]),

@@ -17,6 +17,9 @@
 #              direction up to its number (SPIN: one rotation of 360 + n x 45 degrees from the heading 0, by the gyroscope: the firmware
 #              angle controller, so it turns at full speed and slows down on the number), the drive to the number along a straight line
 #              held by the gyroscope (DRIVE), then music and blinking (FINALE), then the robot is back in WAIT, free for another volunteer.
+#              The first show since the program started makes a MISTAKE: the rotation goes one number too far (360 + (n + 1) x 45), the
+#              robot stays there 0.8 s, then turns back (anticlockwise) to the right number, and only then drives and plays. Later shows
+#              go straight to the number. (Lifted before the mistake is made, the next show makes it again.)
 #              Picked up in the middle of the show, it stops and goes back to LOCKED.
 #   RESET      the robot turned on its back (upside down, 0.5 s) while LOCKED or READY forgets the number and goes back to WAIT: the
 #              magician's hands are busy and the page is only to be looked at, so this is how a trick that went wrong is started again.
@@ -46,6 +49,7 @@ DIST = 90
 HAND = 300
 FORCE = -1
 SOUND = 1
+SLIP = 1
 
 # ---- constants -----------------------------------------------------------------
 TICK_MS = 20            # the loop runs at 50 Hz
@@ -72,7 +76,8 @@ TAU300_S = 0.115        # start-up and braking loss of a move at speed 300, meas
 GUARD_TICKS = 150000    # the last 30 ms of a move belong to the hardware timer
 STOP_MS = 500           # pause after the move
 PAUSE_TICKS = 15        # pause between the parts of the show
-TURN_TIMEOUT = 750      # a turn that has not finished after 15 s is given up
+SLIP_PAUSE_TICKS = 40   # the pause after the mistake (0.8 s), before the robot goes back to the right number
+TURN_TIMEOUT = 750      # a turn that has not finished after 15 s is given up (each turn of the show has its own 15 s)
 S_KP = 0.1              # straight controller (straight_controller.c, as in thymio3-cards and thymio3-draw)
 S_KI = 0.2
 S_MAX_I = 1000.0
@@ -213,7 +218,7 @@ class Edge:
 
 
 class Magic:
-    def __init__(self, theta4, dirn, dist, hand, force, sound):
+    def __init__(self, theta4, dirn, dist, hand, force, sound, slip=1):
         self.theta4 = theta4
         self.dirn = 1 if dirn > 0 else -1
         self.dist = dist
@@ -251,6 +256,10 @@ class Magic:
         self.anim = 0
         # the show
         self.heading = 0
+        self.slip_left = slip != 0   # the first show since the program started goes one number too far (until the audience has seen it)
+        self.slipping = False        # this show does
+        self.phase = 0               # of the turn: 0 on its way, 1 stopped one number too far, 2 coming back
+        self.final = 0               # the heading of the right number
         self.delay = 0
         self.wait_n = 0
         self.motion_in_progress = False
@@ -449,7 +458,14 @@ class Magic:
         say("go", self.lock)
         imu.reset_angle()
         # one rotation, clockwise: a full turn and then on to the number (0 to 7 x 45 degrees)
-        self.heading = -(360 + 45 * self.lock)
+        self.final = -(360 + 45 * self.lock)
+        self.slipping = self.slip_left
+        self.phase = 0
+        if self.slipping:
+            # the first time it "makes a mistake": on to the next number (the one after 7 is 0, one more lap)
+            self.heading = -(360 + 45 * (self.lock + 1))
+        else:
+            self.heading = self.final
         imu.rotate_deg_absolute(self.heading, SPIN_SPEED)
         self.lift_n = 0
         self.set_state(ST_SPIN)
@@ -482,14 +498,31 @@ class Magic:
             self.lift_n = 0
         self.wait_n += 1
         if st == ST_SPIN:
+            if self.phase == 1:
+                # it has gone one number too far and stays there a moment
+                self.delay += 1
+                if self.delay >= SLIP_PAUSE_TICKS:
+                    # then back, the short way (anticlockwise), to the right number
+                    self.heading = self.final
+                    imu.rotate_deg_absolute(self.heading, SPIN_SPEED)
+                    self.phase = 2
+                    self.wait_n = 0
+                    self.delay = 0
+                return
             done = imu.rotation_completed()
             if not done and self.wait_n > TURN_TIMEOUT:
                 imu.rotate_deg(0, 0)
                 done = True
             if done and self.wait_n > 1:
-                self.delay += 1
-                if self.delay >= PAUSE_TICKS:
-                    self.drive()
+                if self.phase == 0 and self.slipping:
+                    # the mistake has been made, and seen: it will not be made again until the program is started again
+                    self.slip_left = False
+                    self.phase = 1
+                    self.delay = 0
+                else:
+                    self.delay += 1
+                    if self.delay >= PAUSE_TICKS:
+                        self.drive()
         elif st == ST_DRIVE:
             if not self.motion_in_progress:
                 self.finale()
@@ -696,10 +729,11 @@ def cleanup():
         say("bye")
 
 
-def run(theta4=None, dirn=None, dist=None, hand=None, force=None, sound=None):
+def run(theta4=None, dirn=None, dist=None, hand=None, force=None, sound=None, slip=None):
     # theta4: the angle (degrees) of the accelerometer's (ax, ay) that means 4; dirn: +1 if the number grows with that angle, -1 if it
     # shrinks; dist: the drive to the number, in mm; hand: the ground sensors' reading that means a hand; force: a number (0..7) to
-    # freeze at once (the page's way out when the validation did not work), -1 for none; sound: the jingle and the beep
+    # freeze at once (the page's way out when the validation did not work), -1 for none; sound: the jingle and the beep; slip: 1 (the page
+    # does not ask) if the first show since the program started goes one number too far, stops, and comes back, 0 for none
     if theta4 is None:
         theta4 = THETA4
     if dirn is None:
@@ -712,10 +746,12 @@ def run(theta4=None, dirn=None, dist=None, hand=None, force=None, sound=None):
         force = FORCE
     if sound is None:
         sound = SOUND
+    if slip is None:
+        slip = SLIP
     beh.disable_behaviors()
     try:
         lights_off()
-        m = Magic(theta4, dirn, dist, hand, force, sound)
+        m = Magic(theta4, dirn, dist, hand, force, sound, slip)
         say("hello", 1)
         say("cfg", theta4, m.dirn, dist, hand, force, sound)
         say("bat", thymio.get_battery_voltage())

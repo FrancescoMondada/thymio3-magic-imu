@@ -31,7 +31,7 @@ const fr = {
       'Thymio mesure la gravité avec son accéléromètre : il sent de quel côté est le bas, donc comment on le tient. Chaque huitième de tour (45°) donne un autre nombre. Quand une main est sous lui, ses capteurs infrarouges la voient et il garde le nombre.',
       'Le nombre est gardé : plus rien ne peut le changer. Thymio attend d’être posé à plat : il le sent parce que la gravité passe maintenant par son dessous. Pour effacer le nombre, retourne Thymio sur le dos.',
       'Thymio se sent posé à plat. Il attend qu’on appuie sur son bouton du milieu.',
-      'Le gyroscope mesure la vitesse de rotation : en l’additionnant, Thymio connaît son angle. Il fait un tour complet, continue jusqu’au bon angle, puis avance tout droit et joue sa musique.',
+      'Le gyroscope mesure la vitesse de rotation : en l’additionnant, Thymio connaît son angle. Il fait un tour complet et continue jusqu’au bon angle. La première fois, il va un nombre trop loin, s’arrête un instant, puis revient au bon nombre. Ensuite il avance tout droit et joue sa musique.',
       'Le téléphone dans ta poche utilise la même gravité pour savoir quand tourner son écran. Prends Thymio debout pour un autre volontaire.',
     ],
   },
@@ -79,7 +79,7 @@ const fr = {
     testHint: 'Envoie un tout petit programme qui fait clignoter les LED du dessus en vert.',
     script: 'Programme du robot', scriptHint: 'Le Python qui tourne sur Thymio (il est installé une seule fois, la page le renvoie si on le change).', show2: 'Afficher', hide2: 'Masquer', copy: 'Copier', download: 'Télécharger',
     lastError: 'Dernière erreur',
-    about: 'Un tour de magie pour découvrir l’IMU de Thymio 3 : l’accéléromètre (la gravité) transporte le nombre, la main sous le robot le fige, le gyroscope le fait tourner vers lui. Rien n’a encore été essayé avec un vrai robot : voir le fichier LISEZMOI.',
+    about: 'Un tour de magie pour découvrir l’IMU de Thymio 3 : l’accéléromètre (la gravité) transporte le nombre, la main sous le robot le fige, le gyroscope le fait tourner vers lui. Seule la lecture du nombre a été essayée avec un vrai robot : voir le fichier LISEZMOI.',
   },
 };
 
@@ -109,7 +109,7 @@ const en = {
       'Thymio measures gravity with its accelerometer: it feels which way is down, so how it is held. Every eighth of a turn (45°) gives another number. When a hand is under it, its infrared sensors see it and it keeps the number.',
       'The number is kept: nothing can change it any more. Thymio waits to be put down flat: it feels it because gravity now goes through its underside. To erase the number, turn Thymio on its back.',
       'Thymio feels it is lying flat. It waits for its middle button to be pressed.',
-      'The gyroscope measures how fast it turns: adding it up, Thymio knows its angle. It makes a full turn, goes on to the right angle, then drives straight and plays its music.',
+      'The gyroscope measures how fast it turns: adding it up, Thymio knows its angle. It makes a full turn and goes on to the right angle. The first time, it goes one number too far, stops for a moment, then comes back to the right number. Then it drives straight and plays its music.',
       'The phone in your pocket uses the same gravity to know when to turn its screen. Pick Thymio up for another volunteer.',
     ],
   },
@@ -157,7 +157,7 @@ const en = {
     testHint: 'Sends a tiny program that blinks the top LEDs green.',
     script: 'Robot program', scriptHint: 'The Python that runs on Thymio (it is installed once, the page sends it again when it changes).', show2: 'Show', hide2: 'Hide', copy: 'Copy', download: 'Download',
     lastError: 'Last error',
-    about: 'A magic trick to discover the IMU of Thymio 3: the accelerometer (gravity) carries the number, the hand under the robot freezes it, the gyroscope turns it towards it. Nothing has been tried with a real robot yet: see the README.',
+    about: 'A magic trick to discover the IMU of Thymio 3: the accelerometer (gravity) carries the number, the hand under the robot freezes it, the gyroscope turns it towards it. Only the reading of the number has been tried with a real robot: see the README.',
   },
 };
 

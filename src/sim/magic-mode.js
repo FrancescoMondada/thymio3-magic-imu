@@ -13,7 +13,7 @@ const VERT_AZ = 7000, FLAT_AZ = 15000, FLAT_XY = 5000, LIFT_AZ = 10000, LIFT_TIC
 const STABLE_TICKS = 25, KEEP_TICKS = 100, HAND_TICKS = 10, HAND_OFF_PCT = 60, FLAT_TICKS = 25, UNREADY_TICKS = 10;
 const HYST = 0.15, FILTER = 0.4;
 const SPIN_SPEED = 500, DRIVE_SPEED = 200;
-const TICKS_PER_S = 5000000, TAU300_S = 0.115, GUARD_TICKS = 150000, STOP_MS = 500, PAUSE_TICKS = 15, TURN_TIMEOUT = 750;
+const TICKS_PER_S = 5000000, TAU300_S = 0.115, GUARD_TICKS = 150000, STOP_MS = 500, PAUSE_TICKS = 15, SLIP_PAUSE_TICKS = 40, TURN_TIMEOUT = 750;
 const UPSIDE_AZ = -13000, UPSIDE_TICKS = 25;
 const S_KP = 0.1, S_KI = 0.2, S_MAX_I = 1000, S_LIMIT = 600;
 const MAXB = 16, NET_TICKS = 5, BLINK_TICKS = 15, BLINKS = 12, SND_END = 11;
@@ -62,7 +62,7 @@ class Edge {
 }
 
 export class MagicMode {
-  constructor(robot, { theta4 = 0, dirn = -1, dist = 90, hand = 300, force = -1, sound = 1, say = () => {}, tone = () => true, playSound = () => {}, lights = () => {} } = {}) {
+  constructor(robot, { theta4 = 0, dirn = -1, dist = 90, hand = 300, force = -1, sound = 1, slip = true, say = () => {}, tone = () => true, playSound = () => {}, lights = () => {} } = {}) {
     this.r = robot;
     this.say = (...parts) => say(`@@${parts.join(' ')}`);
     this.toneOut = tone;
@@ -90,6 +90,8 @@ export class MagicMode {
     this.lock = -1; this.anim = 0;
     // the show
     this.heading = 0; this.delay = 0; this.waitN = 0;
+    this.slipLeft = !!slip;        // the first show since the mode started goes one number too far (until the audience has seen it)
+    this.slipping = false; this.phase = 0; this.final = 0;
     this.motionInProgress = false; this.motionRunning = false;
     this.tStop = 0; this.alarm = 0; this.lastEl = 0; this.tMove = 0;
     this.sOn = false; this.sTarget = 0; this.sBase = 0; this.sMaxCorr = 0.0; this.sInt = 0.0; this.sLastUs = 0;
@@ -270,7 +272,12 @@ export class MagicMode {
   beginShow() {
     this.say('go', this.lock);
     this.r.resetAngle();
-    this.heading = -(360 + 45 * this.lock);        // one rotation, clockwise: a full turn and on to the number
+    // one rotation, clockwise: a full turn and on to the number
+    this.final = -(360 + 45 * this.lock);
+    this.slipping = this.slipLeft;
+    this.phase = 0;
+    // the first time it "makes a mistake": on to the next number (the one after 7 is 0, one more lap)
+    this.heading = this.slipping ? -(360 + 45 * (this.lock + 1)) : this.final;
     this.r.rotateAbsolute(this.heading, SPIN_SPEED);
     this.liftN = 0;
     this.setState(ST.spin);
@@ -305,14 +312,34 @@ export class MagicMode {
     }
     this.waitN += 1;
     if (st === ST.spin) {
+      if (this.phase === 1) {
+        // it has gone one number too far and stays there a moment
+        this.delay += 1;
+        if (this.delay >= SLIP_PAUSE_TICKS) {
+          // then back, the short way (anticlockwise), to the right number
+          this.heading = this.final;
+          this.r.rotateAbsolute(this.heading, SPIN_SPEED);
+          this.phase = 2;
+          this.waitN = 0;
+          this.delay = 0;
+        }
+        return;
+      }
       let done = this.r.rotationCompleted();
       if (!done && this.waitN > TURN_TIMEOUT) {
         this.r.cancelRotation();
         done = true;
       }
       if (done && this.waitN > 1) {
-        this.delay += 1;
-        if (this.delay >= PAUSE_TICKS) this.drive();
+        if (this.phase === 0 && this.slipping) {
+          // the mistake has been made, and seen: it will not be made again until the mode is started again
+          this.slipLeft = false;
+          this.phase = 1;
+          this.delay = 0;
+        } else {
+          this.delay += 1;
+          if (this.delay >= PAUSE_TICKS) this.drive();
+        }
       }
     } else if (st === ST.drive) {
       if (!this.motionInProgress) this.finale();

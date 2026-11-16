@@ -23,6 +23,7 @@ function replay(sc) {
   const lines = [], tones = [], sounds = [];
   const mode = new MagicMode(body, {
     ...parseArgs(sc.args),
+    slip: !!sc.slip,
     say: (t) => lines.push([body.nowMs, t]),
     tone: (f, d) => { tones.push([body.nowMs, f, d]); return true; },
     playSound: (id) => sounds.push([body.nowMs, id]),
@@ -60,9 +61,9 @@ for (const sc of golden) {
 test('the golden file covers the eight numbers and the awkward cases', () => {
   const names = golden.map((g) => g.name);
   for (let n = 0; n < 8; n++) assert.ok(names.includes(`show-${n}`));
-  for (const name of ['calibrated', 'wobble', 'lifted-in-show', 'forced', 'no-sound', 'early-presses', 'reset-on-back']) assert.ok(names.includes(name), name);
+  for (const name of ['calibrated', 'wobble', 'lifted-in-show', 'forced', 'no-sound', 'early-presses', 'reset-on-back', 'slip-0', 'slip-2', 'slip-7', 'slip-then-straight', 'slip-lifted-before-the-mistake']) assert.ok(names.includes(name), name);
   // the Python mode went through the whole show in each of the eight
-  for (const g of golden.filter((x) => x.name.startsWith('show-'))) {
+  for (const g of golden.filter((x) => x.name.startsWith('show-') || /^slip-\d$/.test(x.name))) {
     const words = g.lines.map(([, t]) => t.split(' ')[1]).filter((w) => w);
     assert.ok(g.lines.some(([, t]) => t.startsWith('@@end')), g.name);
     assert.ok(words.includes('finale'), g.name);
@@ -104,7 +105,7 @@ const phasesOf = (lines) => lines.map(parseRobotLine).filter((e) => e?.type === 
 test('the virtual robot: a whole show, driven the way the page does it', () => {
   for (let n = 0; n < 8; n++) {
     const robot = new VirtualRobot({ noise: 120, rng: (() => { let s = 7 + n; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; })() });
-    const lines = [...robot.start({}).lines];
+    const lines = [...robot.start({ slip: false }).lines];
     lines.push(...runRobot(robot, 0.5));
     robot.hold(n);
     lines.push(...runRobot(robot, 1.5));
@@ -121,4 +122,28 @@ test('the virtual robot: a whole show, driven the way the page does it', () => {
     assert.ok(lines.some((l) => l === `@@lock ${n}`), `locked ${n}`);
     assert.ok(lines.some((l) => l === `@@end ${n}`), `ended ${n}`);
   }
+});
+
+test('the virtual robot: the first show goes one number too far and comes back, the second goes straight', () => {
+  const robot = new VirtualRobot();
+  const lines = [...robot.start({}).lines];                       // (the page sends no `slip`: the mistake is on)
+  const headings = [];
+  const show = (n) => {
+    robot.hold(n); lines.push(...runRobot(robot, 1.5));
+    robot.hand(true); lines.push(...runRobot(robot, 1.0));
+    robot.hand(false); robot.lean(40); lines.push(...runRobot(robot, 0.4));
+    robot.lay(); lines.push(...runRobot(robot, 1.5));
+    robot.press();
+    const h0 = robot.body.headingDeg;                                // (the robot has turned before: count from where it is)
+    const trace = [];
+    for (let i = 0; i < (24 * 1000) / 20; i++) { const out = robot.tick(); if (out) lines.push(...out.lines); trace.push(robot.body.headingDeg - h0); }
+    return trace;
+  };
+  lines.push(...runRobot(robot, 0.5));
+  const first = show(2);
+  // one number past the 2 (-450 -> -495), then back
+  assert.ok(Math.min(...first) < -(360 + 135) + 8 && Math.min(...first) > -(360 + 135) - 10, `lowest ${Math.min(...first)}`);
+  const second = show(5);
+  assert.ok(Math.min(...second) > -(360 + 225) - 10 && Math.min(...second) < -(360 + 225) + 8, `second lowest ${Math.min(...second)}`);
+  assert.deepEqual(lines.filter((l) => l.startsWith('@@end')), ['@@end 2', '@@end 5']);
 });
