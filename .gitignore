@@ -1,0 +1,5 @@
+node_modules
+dist
+__pycache__
+.DS_Store
+AdobeStock_418124851.svg

@@ -1,0 +1,13 @@
+{
+  "name": "Thymio · Magie",
+  "short_name": "Magie",
+  "description": "Un tour de magie avec le Thymio 3 pour découvrir l'accéléromètre et la gravité: le robot lit dans la pensée.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
