@@ -26,10 +26,20 @@ test('no text is empty, and none is left in another language by mistake', () => 
       assert.ok(value.trim().length > 0, `${id} ${path} is empty`);
     }
   }
-  // the two languages differ in the script (not copied over)
+  // the languages differ in the script (not copied over)
   const fr = flat(I18N.fr).filter(([p]) => p.startsWith('say.lines') || p.startsWith('steps.'));
-  const en = Object.fromEntries(flat(I18N.en));
-  for (const [path, value] of fr) assert.notEqual(value, en[path], path);
+  for (const id of ['en', 'it', 'de']) {
+    const other = Object.fromEntries(flat(I18N[id]));
+    for (const [path, value] of fr) assert.notEqual(value, other[path], `${id} ${path}`);
+  }
+});
+
+test('the four languages of the page, and a text of each that is really in it', () => {
+  assert.deepEqual(LANGS.map((l) => l.id), ['fr', 'en', 'it', 'de']);
+  assert.match(I18N.it.say.lines[0], /Ecco Thymio/);
+  assert.match(I18N.de.say.lines[0], /Das ist Thymio/);
+  assert.equal(I18N.it.app.title, 'Thymio · Magia');
+  assert.equal(I18N.de.app.title, 'Thymio · Magie');
 });
 
 test('one line, one name, one explanation for every step of the trick', () => {
@@ -58,7 +68,9 @@ test('the language of the page comes from the browser, French when it is not one
   globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
   const set = (languages) => Object.defineProperty(globalThis, 'navigator', { value: { languages }, configurable: true });
   set(['en-GB']); assert.equal(detectLang(), 'en');
-  set(['de-CH']); assert.equal(detectLang(), 'fr');
+  set(['de-CH']); assert.equal(detectLang(), 'de');
+  set(['it-IT']); assert.equal(detectLang(), 'it');
+  set(['es-ES']); assert.equal(detectLang(), 'fr');
   set(['fr-CH']); assert.equal(detectLang(), 'fr');
   store.set('magic.lang', 'en'); set(['fr-CH']); assert.equal(detectLang(), 'en');
   store.set('magic.lang', 'xx'); assert.equal(detectLang(), 'fr');

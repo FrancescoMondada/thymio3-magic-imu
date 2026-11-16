@@ -264,6 +264,10 @@ button { font: inherit; color: inherit; }
   .sim-body { grid-template-columns: 1fr; }
   .sim-plate { max-width: 300px; }
 }
+@media (max-width: 400px) {
+  .tile { padding: 10px 1px 8px; }
+  .tile-label { font-size: 12px; }
+}
 @media (max-height: 460px) and (orientation: landscape) {
   .stage { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); align-items: start; }
   .say { grid-column: 1; }
