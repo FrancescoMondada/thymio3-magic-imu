@@ -55,6 +55,10 @@ const fr = {
     reconnect: 'La connexion avec Thymio est perdue. Reconnecte-le avec le bouton en haut.',
   },
   explain: { title: 'Étape en cours', forced: 'Nombre imposé par la page (la main n’a pas servi)' },
+  qr: {
+    close: 'Fermer', tooBig: 'Le lien ne tient pas dans un code QR.', linkRow: 'Lien vers l’application', linkButton: 'Code QR générique', linkIos: 'iOS · Bluefy',
+    linkHint: 'Affiche en plein écran un code QR que les autres tablettes et téléphones scannent avec leur caméra. Le code générique ouvre le navigateur de l’appareil : sur Android, Chrome ou Samsung Internet conviennent pour un vrai robot. Sur iPad et iPhone, le code Bluefy ouvre Bluefy (à installer), le navigateur qui sait parler à un robot. Adresse :',
+  },
   sim: {
     title: 'Robot virtuel', hint: 'Répète le tour sans robot : tiens Thymio debout à un nombre, pose la main, pose-le à plat, appuie sur le bouton.',
     hold: 'Tenir debout à', lay: 'Poser à plat', flip: 'Retourner sur le dos', hand: 'Main sous le robot', press: 'Bouton du milieu', speed: 'Vitesse', plate: 'Le plateau',
@@ -133,6 +137,10 @@ const en = {
     reconnect: 'The connection to Thymio is lost. Connect it again with the button at the top.',
   },
   explain: { title: 'Current step', forced: 'Number set by the page (the hand was not used)' },
+  qr: {
+    close: 'Close', tooBig: 'The link does not fit in a QR code.', linkRow: 'Link to the app', linkButton: 'Generic QR code', linkIos: 'iOS · Bluefy',
+    linkHint: 'Shows a full-screen QR code that other tablets and phones scan with their camera. The generic code opens the device’s own browser: on Android, Chrome or Samsung Internet work with a real robot. On iPad and iPhone, the Bluefy code opens Bluefy (to be installed), the browser that can talk to a robot. Address:',
+  },
   sim: {
     title: 'Virtual robot', hint: 'Rehearse without a robot: hold Thymio upright at a number, put the hand under it, put it down flat, press the button.',
     hold: 'Hold upright at', lay: 'Put down flat', flip: 'Turn on its back', hand: 'Hand under the robot', press: 'Middle button', speed: 'Speed', plate: 'The plate',
@@ -211,6 +219,10 @@ const it = {
     reconnect: 'Il collegamento con Thymio è perso. Ricollegalo con il pulsante in alto.',
   },
   explain: { title: 'Passo in corso', forced: 'Numero imposto dalla pagina (la mano non è servita)' },
+  qr: {
+    close: 'Chiudi', tooBig: 'Il link non sta in un codice QR.', linkRow: 'Link all’app', linkButton: 'Codice QR generico', linkIos: 'iOS · Bluefy',
+    linkHint: 'Mostra a schermo intero un codice QR che gli altri tablet e telefoni scansionano con la fotocamera. Il codice generico apre il browser del dispositivo: su Android, Chrome o Samsung Internet vanno bene con un robot vero. Su iPad e iPhone, il codice Bluefy apre Bluefy (da installare), il browser che sa parlare con un robot. Indirizzo:',
+  },
   sim: {
     title: 'Robot virtuale', hint: 'Prova il trucco senza robot: tieni Thymio in piedi a un numero, metti la mano, appoggialo in piano, premi il pulsante.',
     hold: 'Tenere in piedi a', lay: 'Appoggiare in piano', flip: 'Girare sulla schiena', hand: 'Mano sotto il robot', press: 'Pulsante centrale', speed: 'Velocità', plate: 'La tavola',
@@ -289,6 +301,10 @@ const de = {
     reconnect: 'Die Verbindung zu Thymio ist verloren. Verbinde ihn neu mit dem Knopf oben.',
   },
   explain: { title: 'Aktueller Schritt', forced: 'Zahl von der Seite vorgegeben (die Hand wurde nicht gebraucht)' },
+  qr: {
+    close: 'Schließen', tooBig: 'Der Link passt nicht in einen QR-Code.', linkRow: 'Link zur App', linkButton: 'Allgemeiner QR-Code', linkIos: 'iOS · Bluefy',
+    linkHint: 'Zeigt im Vollbild einen QR-Code, den andere Tablets und Handys mit der Kamera scannen. Der allgemeine Code öffnet den Browser des Geräts: Unter Android funktionieren Chrome oder Samsung Internet mit einem echten Roboter. Auf iPad und iPhone öffnet der Bluefy-Code Bluefy (muss installiert sein), den Browser, der mit einem Roboter sprechen kann. Adresse:',
+  },
   sim: {
     title: 'Virtueller Roboter', hint: 'Übe das Kunststück ohne Roboter: Halte Thymio aufrecht bei einer Zahl, leg die Hand darunter, leg ihn flach hin, drücke den Knopf.',
     hold: 'Aufrecht halten bei', lay: 'Flach hinlegen', flip: 'Auf den Rücken drehen', hand: 'Hand unter dem Roboter', press: 'Mittlerer Knopf', speed: 'Geschwindigkeit', plate: 'Die Platte',

@@ -51,4 +51,6 @@ export function RobotTop({ size = 80, className = '', ...p }) {
 }
 
 export const CopyIcon = (p) => <Svg {...p}><rect x="8.5" y="8.5" width="11" height="11" rx="2" /><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5" /></Svg>;
+// a QR code: three finders and a few modules
+export const QrIcon = (p) => <Svg {...p}><rect x="3.500" y="3.500" width="7" height="7" rx="1.200" /><rect x="13.500" y="3.500" width="7" height="7" rx="1.200" /><rect x="3.500" y="13.500" width="7" height="7" rx="1.200" /><path d="M6 6h2v2H6M16 6h2v2h-2M6 16h2v2H6M13.500 14h2.500M19 14v3M13.500 17.500v3M16.500 20.500h4M19 20.500v.2" /></Svg>;
 export const DownloadIcon = (p) => <Svg {...p}><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></Svg>;

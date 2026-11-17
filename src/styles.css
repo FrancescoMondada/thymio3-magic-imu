@@ -264,6 +264,19 @@ button { font: inherit; color: inherit; }
   .sim-body { grid-template-columns: 1fr; }
   .sim-plate { max-width: 300px; }
 }
+/* the QR code of the application: white on a dark veil, as large as the screen allows (a camera reads it from across the room) */
+.app-link { color: var(--read); font-weight: 600; overflow-wrap: anywhere; }
+.qr-back { --qr: min(94vw, calc(100dvh - 32px), 780px); position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 16px; overflow: hidden; background: rgba(20, 20, 40, 0.84); }
+.qr-card { width: var(--qr); border-radius: 18px; background: #fff; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45); overflow: hidden; }
+.qr-code { display: block; width: 100%; height: auto; aspect-ratio: 1; }
+.qr-close {
+  position: absolute; top: max(12px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); z-index: 3; width: 52px; height: 52px;
+  border-radius: 50%; background: #fff; color: #0b0b0b; display: grid; place-items: center; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.3);
+}
+.qr-close svg { width: 20px; height: 20px; }
+.qr-problem { position: relative; z-index: 2; max-width: min(420px, 88vw); background: #fff; color: #0b0b0b; border-radius: 22px; padding: 18px 20px; display: grid; justify-items: center; gap: 8px; text-align: center; }
+.qr-problem svg { width: 54px; height: 54px; }
+.qr-problem p { margin: 0; font-weight: 700; line-height: 1.4; }
 @media (max-width: 400px) {
   .tile { padding: 10px 1px 8px; }
   .tile-label { font-size: 12px; }

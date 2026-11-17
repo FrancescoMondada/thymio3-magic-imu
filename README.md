@@ -6,6 +6,8 @@ Un **tour de magie avec le Thymio 3** pour faire découvrir l'IMU, et en particu
 Même base technique que [thymio3-draw](../thymio3-draw) et [thymio3-cards](../thymio3-cards): React + Vite + `thymio3-ts-api`, le tour tourne **sur le robot** (MicroPython), la page l'écoute, un robot virtuel jumeau
 et un faux robot Bluetooth permettent de tout essayer sans matériel.
 
+**La page en ligne: <https://francescomondada.github.io/thymio3-magic-imu/>** (publiée par GitHub Pages à chaque envoi sur `main`). Pour un vrai robot il faut un navigateur avec Web Bluetooth: Chrome ou Edge (ordinateur, Android), Samsung Internet, Bluefy sur iPhone et iPad; sans robot, le robot virtuel marche dans n'importe quel navigateur. Pour ouvrir la page sur d'autres tablettes ou téléphones: **Réglages → Lien vers l'application** affiche cette adresse en **code QR** plein écran (un code générique, un code pour Bluefy sur iOS).
+
 **Essayé sur un vrai Thymio 3** le 16 novembre 2026, avec l'utilisateur: le tour entier a marché (voir « Statut » pour ce qui a été mesuré, et ce qui ne l'a pas été). Aussi essayé sans robot (robot virtuel, faux robot Bluetooth, tests).
 
 ## Le tour
@@ -75,7 +77,7 @@ Une barre fine en haut (le cerveau ouvre les réglages, l'état de la liaison, *
 
 Sans robot connecté, la page est en **robot virtuel** et ajoute en bas un panneau **replié** pour répéter: tenir le robot debout à un nombre, poser la main, le poser à plat, le retourner sur le dos, appuyer, avec le plateau où le robot virtuel va vers son nombre (vitesse ×1 à ×10, sons par le navigateur). Une fois le vrai robot connecté, ce panneau disparaît.
 
-**Réglages** (le cerveau, en haut à gauche, pour la mise en place): langue (français, anglais, italien, allemand; au départ la première langue du navigateur parmi ces quatre, sinon le français), thème; **Recommencer**; **cacher le nombre à l'écran** (si le public voit l'écran: ni le nombre ni l'inclinaison); sons; distance; seuil de la main (avec la lecture en direct); l'étalonnage; **le secours** (« imposer un nombre »: si la main n'a pas marché, le robot repart avec ce nombre déjà gardé: le poser à plat et appuyer); le robot, le journal de la liaison, un test de la liaison, le programme Python.
+**Réglages** (le cerveau, en haut à gauche, pour la mise en place): langue (français, anglais, italien, allemand; au départ la première langue du navigateur parmi ces quatre, sinon le français), thème; **le lien vers l'application** (deux boutons: code QR générique, code QR « iOS · Bluefy »; l'adresse est écrite dessous); **Recommencer**; **cacher le nombre à l'écran** (si le public voit l'écran: ni le nombre ni l'inclinaison); sons; distance; seuil de la main (avec la lecture en direct); l'étalonnage; **le secours** (« imposer un nombre »: si la main n'a pas marché, le robot repart avec ce nombre déjà gardé: le poser à plat et appuyer); le robot, le journal de la liaison, un test de la liaison, le programme Python.
 
 ## La page et le robot
 
@@ -125,7 +127,9 @@ Pas essayé, ou je ne sais pas: l'**étalonnage par les deux poses** appliqué t
 
 **Mes choix** (aucune remarque après le premier essai complet): la demi-seconde de stabilité, la phase de 0,2 s pour la main, la marge de 7° entre deux nombres, **le robot soulevé pendant le tour s'arrête** (retour à « verrouillé »), **le geste « sur le dos » pour effacer** (le magicien ne peut pas toucher la page), le retour tout seul à `wait` après la musique, les étapes qui changent seules (et la présentation et le volontaire réunis dans une phrase: rien ne bouge entre les deux), le **petit bip et le cercle qui tourne** au verrouillage (ils annoncent la lecture au public, mais c'est du théâtre que le magicien peut ne pas vouloir: Réglages → Sons), le halo bleu et vert (visible de côté), la musique, la vitesse du tour (500), **l'erreur de la première fois** (un nombre trop loin, **0,8 s** de pause, retour par le chemin court à la même vitesse; pas de réglage pour l'éteindre: seul `run(..., slip=0)` le fait; elle est « consommée » quand le robot s'est arrêté trop loin, donc un robot soulevé avant ça la refait au prochain essai, et **"Recommencer", un changement de réglage ou une reconnexion relancent le programme: elle revient**; le 7 va 2 tours), le bouton du milieu **seulement** quand le robot est à plat, le texte de la phrase 2 (« montre-le avec ta main » sur le plateau), tout le texte des phrases et des explications, **tous les textes sont de moi, dans les quatre langues** (français, anglais, italien, allemand): l'anglais, l'italien et l'allemand demandent la relecture d'un locuteur natif (le tutoiement, « tavola » et « Platte » pour le plateau, « Show » pour le spectacle).
 
-Pas fait: le code QR de configuration et le lien vers l'application (les autres pages en ont), un moyen de modifier le texte des phrases dans la page (elles sont dans `src/i18n.js`), un réglage pour éteindre l'erreur de la première fois.
+Le **code QR du lien vers l'application** (Réglages) est le même que celui de [thymio3-cards](../thymio3-cards): il contient toujours l'adresse publiée ci-dessus (jamais celle de la page ouverte, pour qu'un essai sur `localhost` donne quand même un lien que les autres écrans atteignent; un fork change `APP_URL` dans `src/share.js`). **Pas essayé avec une caméra de téléphone**: les tests relisent le code avec un décodeur. Le code « Bluefy » (`bluefy://open?url=` + l'adresse) est la forme usuelle, **pas une forme confirmée** par la documentation de Bluefy: à essayer sur un iPad. Pas de code pour Chrome sur Android (le lien `intent://` n'est pas ouvert par l'appareil photo d'un Samsung).
+
+Pas fait: le code QR de **configuration** (les autres pages en ont un: ici il n'y a presque rien à transmettre), un moyen de modifier le texte des phrases dans la page (elles sont dans `src/i18n.js`), un réglage pour éteindre l'erreur de la première fois.
 
 ## Organisation
 
@@ -134,6 +138,7 @@ Pas fait: le code QR de configuration et le lien vers l'application (les autres 
 | `src/py/magic_mode.py` | Le tour en MicroPython, qui tourne sur le robot |
 | `src/spec.js` | Constantes, lecture du nombre (`plateNumber`), étalonnage (`calibrate`), arguments du mode (`runArgs`), géométrie du plateau |
 | `src/protocol.js` | Les lignes `@@` du robot |
+| `src/share.js`, `src/qr.js`, `src/components/QrShow.jsx` | Le lien vers l'application (`APP_URL`, `APP_LINKS`), le code QR (`qrcode-generator`) et son affichage plein écran |
 | `src/store.js` | Ce que la page sait du robot, l'étape en cours (`currentStep`) |
 | `src/script.js`, `src/script-core.js` | Le mode comme module (réduit, nom à base de hash) |
 | `src/robot/robot-backend-core.js`, `robot-backend.js` | Liaison Web Bluetooth: file d'opérations, module, lanceur, arrêt, repli, journal |

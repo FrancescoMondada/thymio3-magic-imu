@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { CloseIcon, CopyIcon, DownloadIcon } from '../icons.jsx';
+import { CloseIcon, CopyIcon, DownloadIcon, QrIcon } from '../icons.jsx';
 import { LANGS } from '../i18n.js';
+import { APP_URL } from '../share.js';
 import { SOURCE_TEXT } from '../script.js';
 import { REAL_TILT, LIMITS, NUMBERS, calibrate, meanReading } from '../spec.js';
 
@@ -80,7 +81,7 @@ function Calibration({ t, snap, live, current, onApply, onReset }) {
 }
 
 export default function Settings({
-  t, lang, onLang, theme, onTheme, prefs, onPrefs, snap, source, live, onRestart, restarting, onForce, onCalibrate, onResetCalibration, log, onClearLog, onTest, testing, canTest, onClose, bluetooth,
+  t, lang, onLang, theme, onTheme, prefs, onPrefs, snap, source, live, onRestart, restarting, onForce, onCalibrate, onResetCalibration, log, onClearLog, onTest, testing, canTest, onShowLink, onClose, bluetooth,
 }) {
   const [copied, setCopied] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
@@ -136,6 +137,14 @@ export default function Settings({
               {[['auto', 'Auto'], ['light', t.head.themeLight], ['dark', t.head.themeDark]].map(([id, label]) => <button key={id} type="button" className={theme === id ? 'on' : ''} aria-pressed={theme === id} onClick={() => onTheme(id)}>{label}</button>)}
             </div>
           </div>
+          <div className="row">
+            <span className="row-label">{t.qr.linkRow}</span>
+            <div className="btn-row tight">
+              <button type="button" className="btn small" onClick={() => onShowLink('web')}><QrIcon size={16} />{t.qr.linkButton}</button>
+              <button type="button" className="btn small" onClick={() => onShowLink('ios')}><QrIcon size={16} />{t.qr.linkIos}</button>
+            </div>
+          </div>
+          <p className="muted small">{t.qr.linkHint} <a className="app-link" href={APP_URL} target="_blank" rel="noopener noreferrer">{APP_URL.replace(/^https:\/\//, '')}</a></p>
         </div>
 
         <h3>{t.set.show}</h3>

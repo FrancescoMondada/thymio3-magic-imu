@@ -5,6 +5,8 @@ import Explain from './components/Explain.jsx';
 import Simulator from './components/Simulator.jsx';
 import Settings from './components/Settings.jsx';
 import LinkInfo from './components/LinkInfo.jsx';
+import QrShow from './components/QrShow.jsx';
+import { APP_LINKS } from './share.js';
 import { BluetoothIcon, BrainIcon, CloseIcon } from './icons.jsx';
 import { I18N, detectLang } from './i18n.js';
 import { Telemetry, STEPS, currentStep } from './store.js';
@@ -42,6 +44,8 @@ export default function App() {
   const [source, setSource] = useState('virtual');                  // 'virtual' | 'robot'
   const [simSpeed, setSimSpeed] = useState(1);
   const [settings, setSettings] = useState(false);
+  const [qr, setQr] = useState(null);                               // null | 'web' | 'ios': the QR code of the application, over the page
+  const closeQr = useCallback(() => setQr(null), []);
   const [log, setLog] = useState([]);
   const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState('');
@@ -247,9 +251,10 @@ export default function App() {
         <Settings
           t={t} lang={lang} onLang={setLang} theme={theme} onTheme={setTheme} prefs={prefs} onPrefs={patchPrefs} snap={snap} source={source} live={linked && snap.running}
           onRestart={() => { setSettings(false); restart(); }} restarting={restarting} onForce={force} onCalibrate={calibrate} onResetCalibration={resetCalibration} log={log} onClearLog={() => setLog([])} onTest={selfTest} testing={testing}
-          canTest={linked} onClose={() => setSettings(false)} bluetooth={bluetooth}
+          canTest={linked} onShowLink={(kind) => { setSettings(false); setQr(kind); }} onClose={() => setSettings(false)} bluetooth={bluetooth}
         />
       )}
+      {qr && <QrShow text={APP_LINKS[qr]} t={t} label={qr === 'ios' ? t.qr.linkIos : t.qr.linkButton} onClose={closeQr} />}
     </div>
   );
 }
